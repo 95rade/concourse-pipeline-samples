@@ -1,0 +1,82 @@
+groups:
+- name: main
+  jobs:
+  - pillar-unit-tests
+  - deploy-pillar-app
+  - run-SIT-tests
+  - promote-new-pillar-version
+
+resources:
+- name: git-checkin
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/95rade/concourse-pipeline-samples.git
+#- name: PWS
+#  type: cf
+#  source:
+#    api: {{pws-api}}
+#    organization: {{pws-organization}}
+#    username: {{deploy-username}}
+#    password: {{deploy-password}}
+#    skip_cert_check: true
+#    space: {{pws-space}}
+
+jobs:
+- name: pillar-unit-tests
+  serial: true
+  public: true
+  plan:
+  - get: git-checkin
+    trigger: true
+  - task: run-unit-tests
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/unit-tests.yml
+
+- name: deploy-pillar-app
+  serial: true
+  public: true
+  plan:
+  - get: git-checkin
+    trigger: true
+    passed:
+      - pillar-unit-tests
+  - task: get-current-app-color
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/current-app-get-info.yml
+    #params:
+  - task: prepare-app-manifest
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/app-manifest-prep.yml
+    #params:
+ # - put: PWS
+ #   params:
+ #     manifest: app-manifest-output/manifest.yml
+ #     path: git-checkin/blue-green-app-deployment/bgd-app
+
+- name: run-SIT-tests
+  serial: true
+  public: true
+  plan:
+  - get: git-checkin
+    trigger: true
+    passed:
+      - deploy-pillar-app
+  - task: get-current-app-color
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/current-app-get-info.yml
+    #params:
+  - task: run-load-tests
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/load-tests.yml
+    #params:
+
+- name: promote-new-pillar-version
+  serial: true
+  public: true
+  plan:
+  - get: git-checkin
+    trigger: true
+    passed:
+      - load-tests
+  - task: get-current-app-color
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/current-app-get-info.yml
+    params:
+  - task: switch-app-routes
+    #file: git-checkin/blue-green-app-deployment/ci/tasks/update-routes.yml
+    #params:
