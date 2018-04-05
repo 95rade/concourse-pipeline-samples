@@ -1,16 +1,14 @@
 ---
 jobs:
-- name: run-cqa-tests
+- name: Test-release
   plan:
-  - get: pillar-new-release
-    trigger: true
+  - get: project-release
     params:
       globs:
       - fly_linux_amd64
     trigger: true
-  #- get: deployment-control-repo
-  #  trigger: true
-  - get: test-repo
+  - get: deployment-control-repo
+  - get: github-tool
     params:
       globs:
       - hub-linux-amd64-*.tgz
@@ -24,9 +22,9 @@ jobs:
           repository: concourse/buildroot
           tag: "git"
       inputs:
-        - name: pillar-new-release
-        #- name: deployment-control-repo
-        - name: test-repo
+        - name: project-release
+        - name: deployment-control-repo
+        - name: github-tool
       outputs:
         - name: deployment-control-repo-updated
       run:
@@ -60,9 +58,9 @@ jobs:
           tag: "git"
       inputs:
         - name: deployment-control-repo-updated
-        #- name: deployment-control-repo
-        - name: pillar-new-release
-        #- name: github-tool
+        - name: deployment-control-repo
+        - name: project-release
+        - name: github-tool
       run:
         path: sh
         args:
@@ -84,12 +82,12 @@ jobs:
   plan:
   - get: deployment-approval
     trigger: true
-  - get: pillar-new-release
+  - get: project-release
     params:
       globs:
       - fly_linux_amd64
     passed:
-      - Run-CQA-Tests-new-release
+      - Test-release
     trigger: false
   - task: do-your-deploy-task-here
     config:
@@ -101,27 +99,25 @@ jobs:
           tag: "git"
       inputs:
         - name: deployment-approval
-        - name: pillar-new-release
+        - name: project-release
       run:
         path: sh
         args:
         - -exc
         - |
-          uname -a
-          pwd
-          export LATEST_GOOD_VERSION=$(cat ./pillar-release/version)
+          export LATEST_GOOD_VERSION=$(cat ./project-release/version)
           echo "Deploy the new version here."
           echo "This task is triggered when a PR is accepted with changes in deployment control file."
           echo "Product version: $LATEST_GOOD_VERSION"
 
-- name: Run-SIT-Acceptance-Tests
+- name: Acceptance-Test-it!
   disable_manual_trigger: true
   plan:
   - get: deployment-approval
     trigger: true
     passed:
       - Deploy-Upon-PR-Approval
-  - get: pillar-new-release
+  - get: project-release
     params:
       globs:
       - fly_linux_amd64
@@ -138,8 +134,6 @@ jobs:
         args:
         - -exc
         - |
-          pwd
-          uname -a
           echo "Do you acceptance tests here."
 
   - task: prep-email-text
@@ -151,7 +145,7 @@ jobs:
           repository: concourse/buildroot
           tag: "git"
       inputs:
-        - name: pillar-release
+        - name: project-release
       outputs:
         - name: email-text
       run:
@@ -159,7 +153,7 @@ jobs:
         args:
         - -exc
         - |
-          export LATEST_GOOD_VERSION=$(cat ./pillar-release/version)
+          export LATEST_GOOD_VERSION=$(cat ./project-release/version)
           echo "Version $LATEST_GOOD_VERSION deployed and tested!" >  ./email-text/email-subject.txt
           echo "Version $LATEST_GOOD_VERSION has been deployed and tested successfully! For details, see pipeline {{ BUILD_PIPELINE_NAME }}, build {{ BUILD_NAME }}, job {{ BUILD_JOB_NAME }}." >  ./email-text/email-body.txt
   - put: send-email
@@ -170,12 +164,10 @@ jobs:
       body: ./email-text/email-body.txt
 
 resources:
-
-- name: pillar-new-release
+- name: project-release
   type: github-release
   source:
     user: concourse
-    #user: 95rade
     repository: concourse
     access_token: {{github-access-token}}
 
@@ -207,11 +199,10 @@ resources:
   type: email
   source:
     from: {{email-address-sender}}
-    #host: {{email-host}}}}
 
 resource_types:
   - name: email
     type: docker-image
     source:
-      repository: mdomke/concourse-email-resource
       #repository: 95rade/concourse-email-resource
+      repository: mdomke/concourse-email-resource
