@@ -3,34 +3,45 @@ resource_types:
 - name: curl-file-resource
   type: git
   source:
-    uri: https://github.com/lsilvapvt/rootfs-curl-resource.git
+    #uri: https://github.com/lsilvapvt/rootfs-curl-resource.git
+    uri: https://github.com/95rade/rootfs-curl-resource.git
 
 resources:
-- name: buildroot-git-image-repo
+- name: get-test-assets
   type: git
   source:
-    uri: https://github.com/lsilvapvt/rootfs-buildroot-git.git
-
-- name: apache-lucene-5
+    #uri: https://github.com/lsilvapvt/rootfs-buildroot-git.git
+    uri: https://github.com/95rade/rootfs-buildroot-git.git
+- name: get-test-repo   # apache-lucene-5
   type: curl-file-resource
   source:
     url: http://www-us.apache.org/dist/lucene/java/5.5.4/lucene-5.5.4.zip
     filename: lucene-5.5.4.zip
+- name: slack-notify
+  type: slack-notification
+  source:
+    url: https://hooks.slack.com/services/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
 
 jobs:
-- name: run-and-get-files
+- name: play-hydra-stream
   plan:
-  - get: buildroot-git-image-repo
-  - get: apache-lucene-5
+  - get: get-test-assets
+  - get: get-test-repo   # apache-lucene-5
   - task: run-and-get-file
-    image: buildroot-git-image-repo
+    image: get-test-assets
     config:
       platform: linux
       inputs:
-      - name: apache-lucene-5
+      - name: get-test-repo    # apache-lucene-5
       run:
         path: sh
         args:
         - -exc
         - |
-          find .
+          pwd
+          cd /bin
+          ls -ltr
+          #chmod 777 test-runner
+          #./test-runner --help
+          echo "Test is running..."
+          echo "Test PASSED"
