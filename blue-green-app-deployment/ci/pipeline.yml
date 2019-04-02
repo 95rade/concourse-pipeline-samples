@@ -56,7 +56,7 @@ jobs:
   - task: prepare-app-manifest
     file: concourse-pipeline-samples/blue-green-app-deployment/ci/tasks/app-manifest-prep.yml
     params:
-      PWS_APP_SUFFIX: {{cf-app-suffix}}
+      CF_APP_SUFFIX: {{cf-app-suffix}}
   - put: PWS
     params:
       manifest: app-manifest-output/manifest.yml
