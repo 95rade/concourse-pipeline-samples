@@ -45,18 +45,18 @@ jobs:
   - task: get-current-app-color
     file: concourse-pipeline-samples/blue-green-app-deployment/ci/tasks/current-app-get-info.yml
     params:
-      CF_APP_SUFFIX: {{cf-app-suffix}}
-      CF_API: {{cf-api}}
-      CF_ORG: {{cf-organization}}
-      CF_USER: {{cf-username}}
-      CF_PWD: {{cf-password}}
-      CF_SPACE: {{cf-space}}
-      #CF_TRACE: true
+      PWS_APP_SUFFIX: {{cf-app-suffix}}
+      PWS_API: {{cf-api}}
+      PWS_ORG: {{cf-organization}}
+      PWS_USER: {{cf-username}}
+      PWS_PWD: {{cf-password}}
+      PWS_SPACE: {{cf-space}}
+      PWS_TRACE: true
 
   - task: prepare-app-manifest
     file: concourse-pipeline-samples/blue-green-app-deployment/ci/tasks/app-manifest-prep.yml
     params:
-      CF_APP_SUFFIX: {{cf-app-suffix}}
+      PWS_APP_SUFFIX: {{cf-app-suffix}}
   - put: PWS
     params:
       manifest: app-manifest-output/manifest.yml
