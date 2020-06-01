@@ -167,13 +167,11 @@ jobs:
 resources:
 - name: project-release
   type: github-release
-  #type: git
   icon: github-circle
   source:
     user: concourse
     repository: concourse
-    #access_token: ((github-access-token))
-    #uri: http://github.com/95rade/docker-robot-framework.git
+    access_token: {{github-access-token}}    # watch the syntax - you need this
 
 - name: deployment-control-repo
   type: git
@@ -181,8 +179,8 @@ resources:
     uri: {{github-deployment-control-repo}}
     branch: master
     branch: build
-    username: ((github-username))
-    password: ((github-password))
+    username: (( github-username ))
+    password: (( github-password ))
 
 - name: deployment-approval
   type: git
@@ -198,7 +196,7 @@ resources:
     user: github
     repository: hub
     pre_release: true
-    #access_token: {{github-access-token}}  # looks like you don't need this.
+    access_token: {{github-access-token}}     # looks like you do need this.
 
 - name: send-email
   type: email
